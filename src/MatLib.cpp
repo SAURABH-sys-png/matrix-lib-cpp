@@ -2,6 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <cstring>
+#include <stdexcept>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ class Matrix {
   public:
   Matrix(u32 r,u32 c):rows(r),cols(c),data((size_t)r*c){}
   f32& operator()(u32 ro,u32 co) {return data[(size_t)cols*ro + co];}
-  f32 operator()(u32 ro,u32 co){return data[(size_t)cols*ro + co];}
+  f32 operator()(u32 ro,u32 co) const {return data[(size_t)cols*ro + co];}
 
   Matrix operator*(f32 scalar) const {
     Matrix out(rows,cols);
@@ -35,11 +36,35 @@ class Matrix {
     if(cols!=other.rows){throw invalid_argument("Dimensions do not match");}
     // a x b  .....  b x d
     Matrix out(rows,other.cols);
-    for(size_t a = 0;a<rows;a++){
-      for(size_t d = 0;d<other.cols;d++){
-        for(size_t b = 0;b<cols;b++){
+    for(u32 a = 0;a<rows;a++){
+      for(u32 d = 0;d<other.cols;d++){
+        for(u32 b = 0;b<cols;b++){
           out(a,d) = out(a,d) + other(b,d)*(*this)(a,b);
         }
+      }
+    }
+
+    return out;
+  }
+
+  void mat_transpose(){
+    vector<f32> tmp((size_t)rows*cols);
+    for(u32 i = 0;i<rows;i++){
+      for(u32 j = 0;j<cols;j++){
+        tmp[(size_t)rows*j + i] = data[(size_t)cols*i + j];
+      }
+    }
+    data = tmp;
+    swap(rows,cols); /// modifies the original Matrix
+  }
+
+  Matrix operator+(const Matrix& other)const {
+    if(cols!=other.cols || rows!=other.rows){throw invalid_argument("Dimensions do not match");}
+
+    Matrix out(rows,cols);
+    for(u32 i = 0;i<rows;i++){
+      for(u32 j = 0;j<cols;j++){
+        out(i,j) = (*this)(i,j) + other(i,j);
       }
     }
 
@@ -63,25 +88,11 @@ void mat_fill(Matrix &src,f32 x){
     src.data[idx] = x;
 }
 
-
-
 // for the testing to be removed at the end
-int main() {
-    Matrix m(3, 3);
-    f32 init[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    for (size_t i = 0; i < 9; i++)
-        m.data[i] = init[i];
-
-    Matrix r = m * 2.5f;
-
-    for (size_t idx = 0; idx < r.data.size(); idx++)
-        cout << r.data[idx] << '\n';
-    Matrix cpy(3,3);
-
-    if(mat_copy(r,cpy))cout << "copied" << '\n';
-
-    for(size_t idx =0;idx <r.data.size();idx++){
-      cout << cpy.data[idx] << '\n';
-    }
-    return 0;
+void mat_print(Matrix &m){
+  for(u32 i = 0;i<m.rows;i++){
+    for(u32 j = 0;j<m.cols;j++)cout << m(i,j) << '\t';
+    cout << '\n';
+  }
+  cout << '\n';
 }
